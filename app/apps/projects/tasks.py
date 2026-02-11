@@ -51,9 +51,14 @@ fi
 git fetch --all
 git checkout {project.github_branch}
 git reset --hard origin/{project.github_branch}
-
-docker compose -f {project.compose_file} up -d --build
 """
+    
+    # Добавляем создание .env если есть переменные
+    if project.env_vars:
+        escaped_env = project.env_vars.replace("'", "'\\''")
+        cmd += f"\necho '{escaped_env}' > .env\n"
+
+    cmd += f"\ndocker compose -f {project.compose_file} up -d --build\n"
 
     log = ""
     try:

@@ -31,7 +31,7 @@ class ProjectAdmin(admin.ModelAdmin):
         ("⚙️ Техническое", {
             "fields": (
                 "github_repo", "github_branch", "server", "domain",
-                "remote_path", "compose_file", "internal_port",
+                "remote_path", "compose_file", "internal_port", "env_vars",
             ),
         }),
         ("💰 Биллинг", {

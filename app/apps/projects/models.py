@@ -67,6 +67,11 @@ class Project(models.Model):
         null=True,
         help_text="Назначается автоматически из диапазона 9001–9999",
     )
+    env_vars = models.TextField(
+        "Переменные окружения (.env)",
+        blank=True,
+        help_text="Будут записаны в файл .env при деплое. Формат: KEY=VALUE",
+    )
 
     # === Биллинг ===
     price_per_month = models.DecimalField(
