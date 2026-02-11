@@ -1,0 +1,1 @@
+# Этот файл удалён — настройки CSRF перенесены в internationalization.py

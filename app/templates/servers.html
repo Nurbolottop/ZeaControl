@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Серверы — ZeaControl{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Серверы</h1>
+    <p>Управление удалёнными серверами</p>
+</div>
+
+<div style="margin-bottom: 1rem;">
+    <a href="/admin/projects/server/add/" class="btn btn-primary btn-sm">+ Добавить сервер</a>
+</div>
+
+{% if servers %}
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1rem;">
+    {% for server in servers %}
+    <div class="server-card">
+        <div class="server-icon">🖥️</div>
+        <div class="server-info">
+            <div class="server-name">{{ server.name }}</div>
+            <div class="server-meta">
+                {{ server.ip_address }} • {{ server.ssh_user }}@:{{ server.ssh_port }}<br>
+                📁 {{ server.base_path }}
+            </div>
+        </div>
+        <div class="server-count" title="Количество проектов">{{ server.project_count }}</div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body">
+        <div class="empty-state">
+            <div class="empty-icon">🖧</div>
+            <p>Нет серверов. <a href="/admin/projects/server/add/" class="project-link">Добавить первый сервер</a></p>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

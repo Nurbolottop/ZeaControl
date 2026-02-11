@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% block title %}{{ project.name }} — ZeaControl{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>
+        <a href="{% url 'dashboard' %}" style="color: var(--text-muted); text-decoration: none;">← </a>
+        {{ project.name }}
+        <span class="badge badge-{{ project.status }}" style="vertical-align: middle; margin-left: 8px;">
+            {{ project.get_status_display }}
+        </span>
+    </h1>
+    <p>{{ project.description|default:"Нет описания" }}</p>
+</div>
+
+<!-- Действия -->
+<div class="btn-group" style="margin-bottom: 1.5rem;">
+    {% if project.status != "deploying" %}
+    <form method="post" action="{% url 'project_action' project.slug 'deploy' %}" class="action-form">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary">🚀 Deploy</button>
+    </form>
+    {% endif %}
+    {% if project.status == "active" or project.status == "grace" %}
+    <form method="post" action="{% url 'project_action' project.slug 'suspend' %}" class="action-form">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">⛔ Suspend</button>
+    </form>
+    {% endif %}
+    {% if project.status == "suspended" %}
+    <form method="post" action="{% url 'project_action' project.slug 'resume' %}" class="action-form">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-success">✅ Resume</button>
+    </form>
+    {% endif %}
+    <a href="/admin/projects/project/{{ project.id }}/change/" class="btn btn-outline">✏️ Редактировать</a>
+</div>
+
+<!-- Детали -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+    <!-- Техническая информация -->
+    <div class="card">
+        <div class="card-header">
+            <h2>⚙️ Техническое</h2>
+        </div>
+        <div class="card-body">
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <span class="detail-label">GitHub</span>
+                    <a href="{{ project.github_repo }}" target="_blank" class="detail-value project-link">
+                        {{ project.github_repo|truncatechars:40 }}
+                    </a>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Ветка</span>
+                    <span class="detail-value">{{ project.github_branch }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Сервер</span>
+                    <span class="detail-value">{{ project.server.name }} ({{ project.server.ip_address }})</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Домен</span>
+                    <span class="detail-value">
+                        {% if project.domain %}
+                        <a href="https://{{ project.domain }}" target="_blank" class="project-link">{{ project.domain
+                            }}</a>
+                        {% else %}—{% endif %}
+                    </span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Внутренний порт</span>
+                    <span class="detail-value">{{ project.internal_port }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Docker-compose</span>
+                    <span class="detail-value">{{ project.compose_file }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Путь на сервере</span>
+                    <span class="detail-value">{{ project.get_remote_path }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Создан</span>
+                    <span class="detail-value">{{ project.created_at|date:"d.m.Y H:i" }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Биллинг -->
+    <div class="card">
+        <div class="card-header">
+            <h2>💰 Биллинг</h2>
+        </div>
+        <div class="card-body">
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Стоимость</span>
+                    <span class="detail-value">{{ project.price_per_month }} сом/мес</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Оплачено до</span>
+                    <span class="detail-value">
+                        {% if project.paid_until %}
+                        {% if project.is_paid %}
+                        <span style="color: var(--green);">{{ project.paid_until|date:"d.m.Y" }}</span>
+                        {% else %}
+                        <span style="color: var(--red);">{{ project.paid_until|date:"d.m.Y" }} (просрочено)</span>
+                        {% endif %}
+                        {% else %}—{% endif %}
+                    </span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Бесплатная поддержка до</span>
+                    <span class="detail-value">
+                        {% if project.free_support_until %}
+                        {{ project.free_support_until|date:"d.m.Y" }}
+                        {% else %}—{% endif %}
+                    </span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Grace до</span>
+                    <span class="detail-value">
+                        {% if project.grace_until %}
+                        <span style="color: var(--yellow);">{{ project.grace_until|date:"d.m.Y" }}</span>
+                        {% else %}—{% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- История деплоев -->
+<div class="card">
+    <div class="card-header">
+        <h2>📜 История деплоев</h2>
+    </div>
+    <div class="card-body">
+        {% if deployments %}
+        <ul class="timeline">
+            {% for dep in deployments %}
+            <li class="timeline-item">
+                <div class="timeline-dot {{ dep.status }}"></div>
+                <div class="timeline-content">
+                    <div class="timeline-time">{{ dep.started_at|date:"d.m.Y H:i" }}</div>
+                    <div class="timeline-text">
+                        <span class="badge badge-{{ dep.action }} btn-sm">{{ dep.get_action_display }}</span>
+                        <span class="badge badge-{{ dep.status }} btn-sm">{{ dep.get_status_display }}</span>
+                        {% if dep.finished_at %}
+                        <span style="color: var(--text-muted); font-size: 0.75rem; margin-left: 8px;">
+                            завершён {{ dep.finished_at|date:"H:i" }}
+                        </span>
+                        {% endif %}
+                    </div>
+                    {% if dep.log %}
+                    <details style="margin-top: 8px;">
+                        <summary style="cursor: pointer; color: var(--accent-light); font-size: 0.8rem;">Показать лог
+                        </summary>
+                        <div class="log-viewer" style="margin-top: 8px;">{{ dep.log }}</div>
+                    </details>
+                    {% endif %}
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">📭</div>
+            <p>Нет истории деплоев</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

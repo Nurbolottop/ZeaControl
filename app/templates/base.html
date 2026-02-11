@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ZeaControl{% endblock %}</title>
+    <meta name="description" content="ZeaControl — панель управления проектами">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="{% url 'dashboard' %}" class="navbar-brand">
+            <div class="logo-icon">⚡</div>
+            ZeaControl
+        </a>
+        <ul class="navbar-links">
+            <li><a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">Dashboard</a></li>
+            <li><a href="{% url 'servers' %}" class="{% if request.resolver_match.url_name == 'servers' %}active{% endif %}">Серверы</a></li>
+            <li><a href="{% url 'billing' %}" class="{% if request.resolver_match.url_name == 'billing' %}active{% endif %}">Биллинг</a></li>
+            <li><a href="/admin/" target="_blank">Admin</a></li>
+        </ul>
+    </nav>
+
+    <main class="main-content">
+        {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+            <li class="message {{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

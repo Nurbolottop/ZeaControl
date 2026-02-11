@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — ZeaControl{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Dashboard</h1>
+    <p>Обзор всех проектов и серверов</p>
+</div>
+
+<!-- Статистика -->
+<div class="stats-grid">
+    <div class="stat-card total">
+        <div class="stat-icon">📦</div>
+        <div class="stat-value">{{ stats.total }}</div>
+        <div class="stat-label">Всего проектов</div>
+    </div>
+    <div class="stat-card active">
+        <div class="stat-icon">🟢</div>
+        <div class="stat-value">{{ stats.active }}</div>
+        <div class="stat-label">Активных</div>
+    </div>
+    <div class="stat-card grace">
+        <div class="stat-icon">🟡</div>
+        <div class="stat-value">{{ stats.grace }}</div>
+        <div class="stat-label">Grace-период</div>
+    </div>
+    <div class="stat-card suspended">
+        <div class="stat-icon">🔴</div>
+        <div class="stat-value">{{ stats.suspended }}</div>
+        <div class="stat-label">Приостановлено</div>
+    </div>
+</div>
+
+<!-- Таблица проектов -->
+<div class="card">
+    <div class="card-header">
+        <h2>📋 Проекты</h2>
+        <a href="/admin/projects/project/add/" class="btn btn-primary btn-sm">+ Добавить</a>
+    </div>
+    <div class="table-wrapper">
+        {% if projects %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Проект</th>
+                    <th>Домен</th>
+                    <th>Статус</th>
+                    <th>Сервер</th>
+                    <th>Порт</th>
+                    <th>Последний деплой</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for project in projects %}
+                <tr>
+                    <td>
+                        <a href="{% url 'project_detail' project.slug %}" class="project-link">
+                            {{ project.name }}
+                        </a>
+                    </td>
+                    <td>
+                        {% if project.domain %}
+                        <a href="https://{{ project.domain }}" target="_blank" class="domain-link">{{ project.domain
+                            }}</a>
+                        {% else %}
+                        <span style="color: var(--text-muted)">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge badge-{{ project.status }}">{{ project.get_status_display }}</span>
+                    </td>
+                    <td>{{ project.server.name }}</td>
+                    <td>{{ project.internal_port }}</td>
+                    <td>
+                        {% if project.last_deploy_at %}
+                        {{ project.last_deploy_at|date:"d.m.Y H:i" }}
+                        {% else %}
+                        <span style="color: var(--text-muted)">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="btn-group">
+                            {% if project.status != "deploying" %}
+                            <form method="post" action="{% url 'project_action' project.slug 'deploy' %}"
+                                class="action-form">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-primary btn-sm" title="Deploy">🚀</button>
+                            </form>
+                            {% endif %}
+                            {% if project.status == "active" or project.status == "grace" %}
+                            <form method="post" action="{% url 'project_action' project.slug 'suspend' %}"
+                                class="action-form">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger btn-sm" title="Suspend">⛔</button>
+                            </form>
+                            {% endif %}
+                            {% if project.status == "suspended" %}
+                            <form method="post" action="{% url 'project_action' project.slug 'resume' %}"
+                                class="action-form">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-success btn-sm" title="Resume">▶️</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">📭</div>
+            <p>Нет проектов. <a href="/admin/projects/project/add/" class="project-link">Добавить первый проект</a></p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Последние деплои -->
+<div class="card">
+    <div class="card-header">
+        <h2>🕐 Последние действия</h2>
+    </div>
+    <div class="card-body">
+        {% if recent_deployments %}
+        <ul class="timeline">
+            {% for dep in recent_deployments %}
+            <li class="timeline-item">
+                <div class="timeline-dot {{ dep.status }}"></div>
+                <div class="timeline-content">
+                    <div class="timeline-time">{{ dep.started_at|date:"d.m.Y H:i" }}</div>
+                    <div class="timeline-text">
+                        <strong>{{ dep.project.name }}</strong> —
+                        <span class="badge badge-{{ dep.action }} btn-sm">{{ dep.get_action_display }}</span>
+                        <span class="badge badge-{{ dep.status }} btn-sm">{{ dep.get_status_display }}</span>
+                    </div>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">📭</div>
+            <p>Нет действий</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

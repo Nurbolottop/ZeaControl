@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Биллинг — ZeaControl{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Биллинг</h1>
+    <p>Финансовый контроль проектов</p>
+</div>
+
+<!-- Сводка -->
+<div class="stats-grid">
+    <div class="stat-card total">
+        <div class="stat-icon">💰</div>
+        <div class="stat-value">{{ total_revenue }}</div>
+        <div class="stat-label">Сом / месяц</div>
+    </div>
+    <div class="stat-card active">
+        <div class="stat-icon">✅</div>
+        <div class="stat-value">{{ paid_count }}</div>
+        <div class="stat-label">Оплачено</div>
+    </div>
+    <div class="stat-card suspended">
+        <div class="stat-icon">⚠️</div>
+        <div class="stat-value">{{ unpaid_count }}</div>
+        <div class="stat-label">Не оплачено</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2>💳 Все проекты</h2>
+    </div>
+    <div class="table-wrapper">
+        {% if projects %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Проект</th>
+                    <th>Стоимость/мес</th>
+                    <th>Оплачено до</th>
+                    <th>Статус оплаты</th>
+                    <th>Grace до</th>
+                    <th>Статус проекта</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for project in projects %}
+                <tr>
+                    <td>
+                        <a href="{% url 'project_detail' project.slug %}" class="project-link">
+                            {{ project.name }}
+                        </a>
+                    </td>
+                    <td>
+                        {% if project.price_per_month %}
+                        {{ project.price_per_month }} сом
+                        {% else %}
+                        <span style="color: var(--text-muted)">Бесплатно</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if project.paid_until %}
+                        {{ project.paid_until|date:"d.m.Y" }}
+                        {% else %}
+                        <span style="color: var(--text-muted)">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if project.is_paid %}
+                        <span class="badge badge-active">Оплачено</span>
+                        {% elif project.paid_until %}
+                        <span class="badge badge-suspended">Просрочено</span>
+                        {% else %}
+                        <span class="badge badge-new">Не задано</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if project.grace_until %}
+                        <span style="color: var(--yellow);">{{ project.grace_until|date:"d.m.Y" }}</span>
+                        {% else %}
+                        <span style="color: var(--text-muted)">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge badge-{{ project.status }}">{{ project.get_status_display }}</span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">📭</div>
+            <p>Нет проектов</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
