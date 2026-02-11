@@ -58,7 +58,11 @@ git reset --hard origin/{project.github_branch}
         escaped_env = project.env_vars.replace("'", "'\\''")
         cmd += f"\necho '{escaped_env}' > .env\n"
 
-    cmd += f"\ndocker compose -f {project.compose_file} up -d --build\n"
+    # Очищаем неиспользуемые Docker-ресурсы перед билдом
+    cmd += f"""
+docker system prune -f --volumes 2>/dev/null || true
+docker compose -f {project.compose_file} up -d --build --remove-orphans
+"""
 
     log = ""
     try:

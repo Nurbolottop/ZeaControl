@@ -3,7 +3,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-SSH_TIMEOUT = 300  # 5 минут максимум на выполнение SSH-команды
+SSH_TIMEOUT = 600  # 10 минут максимум на выполнение SSH-команды
 
 
 def run_ssh(host: str, user: str, port: int, command: str, timeout: int = SSH_TIMEOUT) -> str:
