@@ -4,6 +4,7 @@ services:
   db_zea:
     image: postgres:14
     container_name: postgres_db_zea
+    restart: unless-stopped
     env_file:
       - ../.env
     volumes:
@@ -23,6 +24,7 @@ services:
   redis_zea:
     image: redis:6
     container_name: redis_zea
+    restart: unless-stopped
     command: redis-server --maxmemory 48mb --maxmemory-policy allkeys-lru
     networks:
       - zea_network
@@ -35,7 +37,9 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
+    image: zea_app:latest
     container_name: django_web_zea
+    restart: unless-stopped
     command: sh -c "/entrypoint.sh && gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers 2 --worker-tmp-dir /dev/shm --timeout 120"
     volumes:
       - ../app:/app
@@ -62,10 +66,9 @@ services:
           memory: 384M
 
   celery_worker_zea:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
+    image: zea_app:latest
     container_name: celery_worker_zea
+    restart: unless-stopped
     command: celery -A core worker -l info --concurrency=1 --max-tasks-per-child=50
     volumes:
       - ../app:/app
@@ -76,10 +79,7 @@ services:
       - DJANGO_SETTINGS_MODULE=core.settings
       - CELERY_STACK=zea
     depends_on:
-      db_zea:
-        condition: service_healthy
-      redis_zea:
-        condition: service_started
+      - web_zea
     networks:
       - zea_network
     deploy:
@@ -88,10 +88,9 @@ services:
           memory: 384M
 
   celery_beat_zea:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
+    image: zea_app:latest
     container_name: celery_beat_zea
+    restart: unless-stopped
     command: celery -A core beat -l info
     volumes:
       - ../app:/app
@@ -101,10 +100,7 @@ services:
       - DJANGO_SETTINGS_MODULE=core.settings
       - CELERY_STACK=zea
     depends_on:
-      db_zea:
-        condition: service_healthy
-      redis_zea:
-        condition: service_started
+      - web_zea
     networks:
       - zea_network
     deploy:
@@ -113,10 +109,9 @@ services:
           memory: 128M
 
   telegram_bot:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
+    image: zea_app:latest
     container_name: telegram_bot_zea
+    restart: unless-stopped
     command: python manage.py bot
     volumes:
       - ../app:/app
@@ -126,7 +121,6 @@ services:
       - DJANGO_SETTINGS_MODULE=core.settings
       - CELERY_STACK=zea
     depends_on:
-      - db_zea
       - web_zea
     networks:
       - zea_network
