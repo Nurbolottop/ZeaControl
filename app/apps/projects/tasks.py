@@ -58,10 +58,11 @@ git reset --hard origin/{project.github_branch}
         escaped_env = project.env_vars.replace("'", "'\\''")
         cmd += f"\necho '{escaped_env}' > .env\n"
 
-    # Очищаем неиспользуемые Docker-ресурсы перед билдом
+    # Очищаем неиспользуемые Docker-ресурсы и запускаем сборку с низким приоритетом
     cmd += f"""
-docker system prune -f --volumes 2>/dev/null || true
-docker compose -f {project.compose_file} up -d --build --remove-orphans
+docker system prune -f 2>/dev/null || true
+export DOCKER_BUILDKIT=1
+nice -n 19 ionice -c 3 docker compose -f {project.compose_file} up -d --build --remove-orphans
 """
 
     log = ""
