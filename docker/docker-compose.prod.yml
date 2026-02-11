@@ -11,10 +11,6 @@ services:
       - postgres_data_zea:/var/lib/postgresql/data
     networks:
       - zea_network
-    deploy:
-      resources:
-        limits:
-          memory: 256M
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}" ]
       interval: 10s
@@ -28,10 +24,6 @@ services:
     command: redis-server --maxmemory 48mb --maxmemory-policy allkeys-lru
     networks:
       - zea_network
-    deploy:
-      resources:
-        limits:
-          memory: 64M
 
   web_zea:
     build:
@@ -60,10 +52,6 @@ services:
       - "8000:8000"
     networks:
       - zea_network
-    deploy:
-      resources:
-        limits:
-          memory: 384M
 
   celery_worker_zea:
     image: zea_app:latest
@@ -82,10 +70,6 @@ services:
       - web_zea
     networks:
       - zea_network
-    deploy:
-      resources:
-        limits:
-          memory: 384M
 
   celery_beat_zea:
     image: zea_app:latest
@@ -103,10 +87,6 @@ services:
       - web_zea
     networks:
       - zea_network
-    deploy:
-      resources:
-        limits:
-          memory: 128M
 
   telegram_bot:
     image: zea_app:latest
@@ -124,10 +104,6 @@ services:
       - web_zea
     networks:
       - zea_network
-    deploy:
-      resources:
-        limits:
-          memory: 128M
 
 networks:
   zea_network:
